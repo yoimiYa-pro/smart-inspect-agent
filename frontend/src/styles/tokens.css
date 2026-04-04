@@ -1,0 +1,112 @@
+:root {
+  font-family: "Plus Jakarta Sans", Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
+    sans-serif;
+  /* Slate + indigo：偏「工作台 / 研报」质感，减少高对比红描边 */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-weight: 400;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-hero: clamp(28px, 4vw, 36px);
+
+  --surface-sidebar: #eef2ff;
+  --surface-main: #f8fafc;
+  --surface-page: #f1f5f9;
+  --surface-card: #ffffff;
+  --surface-card-elevated: #ffffff;
+  --sidebar-border: rgba(15, 23, 42, 0.06);
+  --sidebar-pill-active: #e0e7ff;
+  --sidebar-row-hover: rgba(79, 70, 229, 0.07);
+  --sidebar-width: 280px;
+  --sidebar-width-collapsed: 72px;
+  /* 固定底栏 left 与侧栏同步；可由 .page-shell 行内覆盖（收起态） */
+  --composer-dock-left: var(--sidebar-width);
+
+  --color-border: rgba(15, 23, 42, 0.07);
+  --color-border-strong: rgba(15, 23, 42, 0.11);
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-soft: #eef2ff;
+  --color-primary-soft-border: #c7d2fe;
+  --color-primary-faint: rgba(79, 70, 229, 0.08);
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 8px rgba(15, 23, 42, 0.04), 0 14px 28px rgba(15, 23, 42, 0.08);
+  --glass-border: var(--color-border);
+  --glass-shadow: var(--shadow-sm);
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 52%, #4338ca 100%);
+  --primary-gradient-hover: linear-gradient(135deg, #818cf8 0%, #4f46e5 45%, #4338ca 100%);
+
+  --review-stack-gap: var(--space-5);
+  --review-inner-grid-gap: 20px;
+  --review-anchor-offset: 96px;
+  --review-clause-list-max-height: 600px;
+  --review-chat-history-max-height: min(44vh, 400px);
+  --review-clause-split-grid-max-height: min(70vh, 720px);
+  --review-loading-min-height: 500px;
+
+  --radius-card: 18px;
+  --radius-md: 14px;
+  --radius-control: 12px;
+  --radius-pill: 999px;
+  --shadow-elevated: var(--shadow-md);
+  --color-risk-low: #059669;
+  --color-risk-medium: #d97706;
+  --color-risk-high: #e11d48;
+  --surface-elevated: var(--surface-card);
+  --ease-out-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 360px;
+  min-height: 100vh;
+  background: var(--surface-page);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(95, 99, 104, 0.35);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(95, 99, 104, 0.55);
+}
+
+button,
+textarea,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#app {
+  min-height: 100vh;
+}
