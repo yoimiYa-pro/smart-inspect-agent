@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -5,6 +6,8 @@ from pathlib import Path
 from typing import List, Optional
 
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -82,7 +85,14 @@ def set_openai_model(model_name: str) -> Settings:
     normalized_model = (model_name or "").strip()
     if normalized_model not in SUPPORTED_OPENAI_MODELS:
         raise ValueError(f"不支持的模型：{normalized_model}")
-    _upsert_env_value(ENV_FILE, "OPENAI_MODEL", normalized_model)
+    try:
+        _upsert_env_value(ENV_FILE, "OPENAI_MODEL", normalized_model)
+    except OSError as exc:
+        logger.warning(
+            "无法写入 %s（例如只读部署目录），已仅在进程内更新 OPENAI_MODEL：%s",
+            ENV_FILE,
+            exc,
+        )
     os.environ["OPENAI_MODEL"] = normalized_model
     get_settings.cache_clear()
     return get_settings()

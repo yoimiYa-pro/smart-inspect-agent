@@ -18,6 +18,7 @@ from app.schemas import (
     ModelConfigResponse,
     ReviewRequest,
     ReviewResponse,
+    dump_pydantic_model,
 )
 from app.services.analyzer import ContractReviewService
 from app.services.llm_client import OpenAICompatibleClient
@@ -95,7 +96,7 @@ def followup_risk(payload: FollowupRequest) -> FollowupResponse:
     review_service = _build_review_service()
     return review_service.answer_followup(
         contract_text=payload.contract_text,
-        risk=payload.risk.model_dump(),
+        risk=dump_pydantic_model(payload.risk),
         question=payload.question,
         role=payload.role,
         enhance_with_llm=payload.enhance_with_llm,
@@ -109,8 +110,8 @@ def chat_with_contract(payload: ContractChatRequest) -> ContractChatResponse:
         contract_text=payload.contract_text,
         question=payload.question,
         role=payload.role,
-        analysis=payload.analysis.model_dump(),
-        messages=[message.model_dump() for message in payload.messages],
+        analysis=dump_pydantic_model(payload.analysis),
+        messages=[dump_pydantic_model(message) for message in payload.messages],
         enhance_with_llm=payload.enhance_with_llm,
     )
 

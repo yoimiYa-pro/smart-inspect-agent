@@ -30,6 +30,10 @@ CLAUSE_TEMPLATES = {
 }
 
 
+def _as_risk_dict(item: Any) -> dict[str, Any]:
+    return item if isinstance(item, dict) else {}
+
+
 def build_followup_hint(risk: dict[str, Any]) -> str:
     return CATEGORY_HINTS.get(risk.get("category", ""), "建议继续围绕触发条件、责任边界和补救措施追问。")
 
@@ -84,20 +88,23 @@ def answer_contract_chat_with_mock(
     signing_advice = analysis.get("signing_advice", "谨慎")
     priority_notice = analysis.get("priority_notice", "")
     recent_messages = messages or []
-    recent_question = recent_messages[-1]["content"] if recent_messages else ""
+    last_msg = recent_messages[-1] if recent_messages else None
+    recent_question = (
+        str(last_msg.get("content") or "").strip() if isinstance(last_msg, dict) else ""
+    )
     q = question.strip()
 
     if "安全" in q:
         answer = (
             f"结论先说：{one_line or f'这份合同从{role}视角整体为{overall}风险，建议{signing_advice}签署。'}"
-            f"目前最危险的集中在：{'；'.join(item.get('title', '') for item in top_risks[:3]) or '付款、责任和解除条款'}。"
+            f"目前最危险的集中在：{'；'.join(_as_risk_dict(item).get('title', '') for item in top_risks[:3]) or '付款、责任和解除条款'}。"
             f"{priority_notice}"
         )
     elif "最危险" in q or "top3" in q or "前三" in q:
         answer = (
             "当前优先级最高的3项是："
             + "；".join(
-                f"{item.get('title', '风险项')}（优先级#{item.get('priority_rank', '-') }）"
+                f"{_as_risk_dict(item).get('title', '风险项')}（优先级#{_as_risk_dict(item).get('priority_rank', '-') }）"
                 for item in top_risks[:3]
             )
             + "。建议先把这些条款谈妥，再决定是否继续推进签署。"
@@ -110,20 +117,33 @@ def answer_contract_chat_with_mock(
                 f"{priority_notice}"
             )
         else:
+            r0 = _as_risk_dict(top_risks[0])
+            r1 = _as_risk_dict(top_risks[1]) if len(top_risks) > 1 else {}
+            r2 = _as_risk_dict(top_risks[2]) if len(top_risks) > 2 else {}
             answer = (
                 f"从{role}视角，最需要注意三件事："
-                f"1）{top_risks[0].get('suggestion', '先改付款条件')}；"
-                f"2）{top_risks[1].get('suggestion', '再收紧责任边界') if len(top_risks) > 1 else '再补齐违约责任'}；"
-                f"3）{top_risks[2].get('suggestion', '最后明确解除与争议条款') if len(top_risks) > 2 else '最后确认争议解决机制'}。"
+                f"1）{r0.get('suggestion', '先改付款条件')}；"
+                f"2）{r1.get('suggestion', '再收紧责任边界') if len(top_risks) > 1 else '再补齐违约责任'}；"
+                f"3）{r2.get('suggestion', '最后明确解除与争议条款') if len(top_risks) > 2 else '最后确认争议解决机制'}。"
             )
     else:
-        reference_titles = "；".join(item.get("title", "") for item in top_risks[:2]) or "重点风险条款"
+        reference_titles = (
+            "；".join(_as_risk_dict(item).get("title", "") for item in top_risks[:2]) or "重点风险条款"
+        )
         answer = (
             f"我会基于现有分析继续回答。当前合同整体风险为“{overall}”，重点是：{reference_titles}。"
             f"结合你刚才的问题“{q}”以及上下文“{recent_question}”，建议优先围绕付款触发条件、责任边界和解除补偿三块继续谈判。"
         )
 
-    citations = [item.get("title", "") for item in top_risks[:3] if item.get("title")]
+    citations = [
+        t
+        for t in (_as_risk_dict(item).get("title", "") for item in top_risks[:3])
+        if t
+    ]
     if not citations and risk_items:
-        citations = [item.get("title", "") for item in risk_items[:3] if item.get("title")]
+        citations = [
+            t
+            for t in (_as_risk_dict(item).get("title", "") for item in risk_items[:3])
+            if t
+        ]
     return {"answer": answer, "citations": citations}

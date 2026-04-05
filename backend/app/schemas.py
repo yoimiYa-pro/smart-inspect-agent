@@ -1,6 +1,17 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field
+
+
+def dump_pydantic_model(model: Any) -> dict:
+    """序列化为字典，兼容 Pydantic v2（model_dump）与 v1（dict）。"""
+    dump_v2 = getattr(model, "model_dump", None)
+    if callable(dump_v2):
+        return dump_v2()
+    dump_v1 = getattr(model, "dict", None)
+    if callable(dump_v1):
+        return dump_v1()
+    raise TypeError(f"无法序列化 {type(model).__name__}：缺少 model_dump / dict")
 
 
 class Clause(BaseModel):
