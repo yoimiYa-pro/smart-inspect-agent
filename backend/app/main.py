@@ -10,6 +10,7 @@ from app.config import get_settings, get_supported_models, set_openai_model
 from app.schemas import (
     ContractChatRequest,
     ContractChatResponse,
+    DelilegalLawDetailResponse,
     EnhanceReviewRequest,
     FollowupRequest,
     FollowupResponse,
@@ -21,6 +22,7 @@ from app.schemas import (
     dump_pydantic_model,
 )
 from app.services.analyzer import ContractReviewService
+from app.services.delilegal_client import DeliLegalClient
 from app.services.llm_client import OpenAICompatibleClient
 
 app_settings = get_settings()
@@ -35,7 +37,9 @@ app.add_middleware(
 
 
 def _build_review_service() -> ContractReviewService:
-    return ContractReviewService(OpenAICompatibleClient(get_settings()))
+    settings = get_settings()
+    deli = DeliLegalClient(settings) if settings.delilegal_enabled else None
+    return ContractReviewService(OpenAICompatibleClient(settings), delilegal_client=deli)
 
 
 def _build_model_config_response() -> ModelConfigResponse:
@@ -53,6 +57,7 @@ def health_check() -> HealthResponse:
     return HealthResponse(
         status="ok",
         llm_enabled=settings.llm_enabled,
+        delilegal_enabled=settings.delilegal_enabled,
         frontend_ready=settings.frontend_dist.exists(),
         active_model=settings.openai_model or get_supported_models()[-1],
         available_models=get_supported_models(),
@@ -101,6 +106,18 @@ def followup_risk(payload: FollowupRequest) -> FollowupResponse:
         role=payload.role,
         enhance_with_llm=payload.enhance_with_llm,
     )
+
+
+@app.get("/api/laws/delilegal/{law_id}", response_model=DelilegalLawDetailResponse)
+def get_delilegal_law_detail(law_id: str, merge: bool = True) -> DelilegalLawDetailResponse:
+    settings = get_settings()
+    if not settings.delilegal_enabled:
+        raise HTTPException(status_code=503, detail="未配置得理法规接口（DELILEGAL_APPID / DELILEGAL_SECRET）")
+    client = DeliLegalClient(settings)
+    body = client.get_law_info(law_id.strip(), merge=merge)
+    if not body:
+        raise HTTPException(status_code=502, detail="得理法规详情获取失败或法规不存在")
+    return DelilegalLawDetailResponse(**body)
 
 
 @app.post("/api/chat", response_model=ContractChatResponse)

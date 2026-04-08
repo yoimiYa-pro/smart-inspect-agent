@@ -18,7 +18,7 @@ defineProps({
         :class="card.tone"
       >
         <div class="tile-head">
-          <span class="tile-icon">{{ card.icon }}</span>
+          <span class="tile-icon" aria-hidden="true">{{ card.icon }}</span>
           <strong>{{ card.title }}</strong>
         </div>
         <p class="tile-value">{{ card.value }}</p>

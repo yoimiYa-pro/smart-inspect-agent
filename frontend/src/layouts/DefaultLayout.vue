@@ -3,7 +3,6 @@ import { computed, onMounted, onScopeDispose, onUnmounted, ref, watch } from 'vu
 import { RouterView, useRoute } from 'vue-router'
 import AppFooter from '../components/AppFooter.vue'
 import AppSidebar from '../components/AppSidebar.vue'
-import HeroToolbar from '../components/HeroToolbar.vue'
 import ToastHost from '../components/ToastHost.vue'
 import { useDocumentTitle } from '../composables/useDocumentTitle'
 import { pushToast } from '../composables/useToast'
@@ -14,12 +13,6 @@ useDocumentTitle()
 const route = useRoute()
 const isReportPage = computed(() => route.path.startsWith('/report'))
 const hasReport = computed(() => !!reviewResult.value)
-
-const heroVariant = computed(() => {
-  if (route.name === 'help') return 'help'
-  if (route.name === 'review') return 'workspace'
-  return 'full'
-})
 
 const narrowScreen = ref(false)
 const sidebarOpen = ref(false)
@@ -87,21 +80,7 @@ watch(sidebarOpen, (open) => {
 })
 onScopeDispose(() => document.removeEventListener('keydown', onDrawerEsc))
 
-const {
-  selectedRole,
-  selectedModel,
-  activeModel,
-  modelOptions,
-  modelSaving,
-  useLlm,
-  loading,
-  errorMessage,
-  chatError,
-  setExample,
-  clearAll,
-  handleModelChange,
-  submitReview,
-} = useContractReview()
+const { errorMessage, chatError } = useContractReview()
 
 watch(errorMessage, (msg) => {
   if (msg) pushToast({ message: msg, variant: 'error', duration: 5200 })
@@ -110,13 +89,6 @@ watch(errorMessage, (msg) => {
 watch(chatError, (msg) => {
   if (msg) pushToast({ message: msg, variant: 'error', duration: 5200 })
 })
-
-function setSelectedRole(v) {
-  selectedRole.value = v
-}
-function setUseLlm(v) {
-  useLlm.value = v
-}
 
 const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.1.0'
 
@@ -173,24 +145,6 @@ const composerDockVars = computed(() => {
           </button>
           <span class="mobile-chrome-title">智能合同审查</span>
         </header>
-
-        <HeroToolbar
-          v-if="!isReportPage"
-          :variant="heroVariant"
-          :selected-role="selectedRole"
-          :selected-model="selectedModel"
-          :use-llm="useLlm"
-          :model-options="modelOptions"
-          :active-model="activeModel"
-          :model-saving="modelSaving"
-          :loading="loading"
-          @update:selected-role="setSelectedRole"
-          @update:use-llm="setUseLlm"
-          @model-change="handleModelChange"
-          @set-example="setExample"
-          @clear-all="clearAll"
-          @submit-review="submitReview"
-        />
 
         <main id="main-content">
           <RouterView v-slot="{ Component }">

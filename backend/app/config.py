@@ -48,11 +48,35 @@ class Settings:
         default_factory=lambda: _parse_origins(os.getenv("CORS_ORIGINS", ""))
     )
     frontend_dist: Path = field(default_factory=lambda: ROOT_DIR / "frontend" / "dist")
-
+    delilegal_api_base: str = field(
+        default_factory=lambda: (
+            os.getenv("DELILEGAL_API_BASE", "https://openapi.delilegal.com").strip().rstrip("/")
+            or "https://openapi.delilegal.com"
+        )
+    )
+    delilegal_appid: str = field(default_factory=lambda: os.getenv("DELILEGAL_APPID", "").strip())
+    delilegal_secret: str = field(default_factory=lambda: os.getenv("DELILEGAL_SECRET", "").strip())
+    delilegal_timeout_seconds: float = field(
+        default_factory=lambda: float(os.getenv("DELILEGAL_TIMEOUT_SECONDS", "20"))
+    )
+    delilegal_max_risks: int = field(
+        default_factory=lambda: max(1, int(os.getenv("DELILEGAL_MAX_RISKS", "8")))
+    )
+    delilegal_fetch_detail_in_review: bool = field(
+        default_factory=lambda: os.getenv("DELILEGAL_FETCH_DETAIL_IN_REVIEW", "").strip().lower()
+        in ("1", "true", "yes")
+    )
+    delilegal_excerpt_max_chars: int = field(
+        default_factory=lambda: max(200, int(os.getenv("DELILEGAL_EXCERPT_MAX_CHARS", "1500")))
+    )
 
     @property
     def llm_enabled(self) -> bool:
         return bool(self.openai_api_key and self.openai_model)
+
+    @property
+    def delilegal_enabled(self) -> bool:
+        return bool(self.delilegal_appid and self.delilegal_secret)
 
 
 @lru_cache(maxsize=1)

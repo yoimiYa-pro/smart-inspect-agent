@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import AppBrandMark from './AppBrandMark.vue'
+import ReportSidebarNavGlyph from './ReportSidebarNavGlyph.vue'
 
 const props = defineProps({
   hasReport: { type: Boolean, required: true },
@@ -92,7 +94,9 @@ const menuAria = computed(() => {
     </div>
 
     <div class="sidebar-brand">
-      <span class="sidebar-brand-mark" aria-hidden="true" />
+      <span class="sidebar-brand-mark" aria-hidden="true">
+        <AppBrandMark />
+      </span>
       <div class="sidebar-brand-text">
         <span class="sidebar-brand-title">智能合同审查</span>
         <span class="sidebar-brand-sub">工作区</span>
@@ -110,18 +114,20 @@ const menuAria = computed(() => {
           @click="onNavClick"
         >
           <span class="sidebar-nav-item__icon" aria-hidden="true">
-            <svg class="sidebar-glyph" viewBox="0 0 24 24" fill="none">
+            <svg class="sidebar-glyph" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <!-- 纸面基线 + 笔：表示「合同与审查」工作台，与品牌「智能体联结」徽标区分 -->
               <path
                 stroke="currentColor"
                 stroke-width="1.75"
-                stroke-linejoin="round"
-                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                stroke-linecap="round"
+                d="M4 19.5h11"
               />
               <path
                 stroke="currentColor"
                 stroke-width="1.75"
+                stroke-linecap="round"
                 stroke-linejoin="round"
-                d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
+                d="M14.5 4.5 20 10l-7.5 7.5H8v-4.5L14.5 4.5z"
               />
             </svg>
           </span>
@@ -145,96 +151,7 @@ const menuAria = computed(() => {
             @click="onNavClick"
           >
             <span class="sidebar-nav-item__icon" aria-hidden="true">
-              <svg
-                v-if="item.icon === 'overview'"
-                class="sidebar-glyph"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <rect
-                  x="3"
-                  y="3"
-                  width="7"
-                  height="9"
-                  rx="1.25"
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                />
-                <rect
-                  x="14"
-                  y="3"
-                  width="7"
-                  height="5"
-                  rx="1.25"
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                />
-                <rect
-                  x="14"
-                  y="12"
-                  width="7"
-                  height="9"
-                  rx="1.25"
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                />
-                <rect
-                  x="3"
-                  y="16"
-                  width="7"
-                  height="5"
-                  rx="1.25"
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                />
-              </svg>
-              <svg
-                v-else-if="item.icon === 'risk'"
-                class="sidebar-glyph"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                  stroke-linejoin="round"
-                  d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-                />
-                <path
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  d="M12 9v4M12 17h.01"
-                />
-              </svg>
-              <svg
-                v-else-if="item.icon === 'clauses'"
-                class="sidebar-glyph"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
-                />
-                <path
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                  stroke-linejoin="round"
-                  d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
-                />
-              </svg>
-              <svg v-else class="sidebar-glyph" viewBox="0 0 24 24" fill="none">
-                <path
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                  stroke-linejoin="round"
-                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                />
-              </svg>
+              <ReportSidebarNavGlyph :variant="item.icon" />
             </span>
             <span class="sidebar-nav-item__label">
               {{ item.label }}
@@ -252,17 +169,7 @@ const menuAria = computed(() => {
             role="presentation"
           >
             <span class="sidebar-nav-item__icon" aria-hidden="true">
-              <svg class="sidebar-glyph sidebar-glyph--muted" viewBox="0 0 24 24" fill="none">
-                <rect
-                  x="3"
-                  y="3"
-                  width="18"
-                  height="18"
-                  rx="2"
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                />
-              </svg>
+              <ReportSidebarNavGlyph :variant="item.icon" muted />
             </span>
             <span class="sidebar-nav-item__label">
               {{ item.label }}

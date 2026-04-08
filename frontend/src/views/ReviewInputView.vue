@@ -47,26 +47,32 @@ const pendingContractPreview = computed(() => contractText.value.trim())
     <div class="review-workspace-page__main panel-stack">
       <template v-if="loading">
         <div class="panel-stack loading-panel-stack review-loading-stack">
-          <section
-            v-if="pendingContractPreview"
-            class="panel-card report-reviewing-doc"
-            aria-busy="true"
-            aria-label="正在审查的合同正文"
-          >
-            <div class="report-ready-contract__head">
-              <span class="report-ready-contract__label">正在审查的合同正文</span>
-              <span class="report-ready-contract__meta" aria-live="polite">共 {{ [...contractText].length }} 字</span>
+          <div class="review-loading-layout">
+            <div class="review-loading-layout__main">
+              <section
+                v-if="pendingContractPreview"
+                class="panel-card report-reviewing-doc"
+                aria-busy="true"
+                aria-label="正在审查的合同正文"
+              >
+                <div class="report-ready-contract__head">
+                  <span class="report-ready-contract__label">正在审查的合同正文</span>
+                  <span class="report-ready-contract__meta" aria-live="polite">共 {{ [...contractText].length }} 字</span>
+                </div>
+                <div
+                  class="report-ready-contract__body report-ready-contract__body--primary"
+                  tabindex="0"
+                  role="region"
+                >
+                  {{ contractText }}
+                </div>
+              </section>
+              <LoadingSkeleton v-if="!pendingContractPreview" />
             </div>
-            <div
-              class="report-ready-contract__body report-ready-contract__body--primary"
-              tabindex="0"
-              role="region"
-            >
-              {{ contractText }}
-            </div>
-          </section>
-          <ReviewPipelineProgress :active-step="loadingPhase" />
-          <LoadingSkeleton v-if="!pendingContractPreview" />
+            <aside class="review-loading-layout__rail" aria-label="审查进度">
+              <ReviewPipelineProgress :active-step="loadingPhase" />
+            </aside>
+          </div>
         </div>
       </template>
       <section v-else-if="result" class="panel-card report-ready-card">

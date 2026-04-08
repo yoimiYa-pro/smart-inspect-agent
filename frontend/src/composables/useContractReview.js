@@ -14,27 +14,12 @@ import {
   scheduleReviewSessionPersist,
 } from './reviewSessionStorage'
 import { getErrorMessage } from '../utils/errorMessage'
+import { contractExamples } from '../data/contractExamples.js'
 
-export const exampleText = `第一条 服务内容
-乙方负责为甲方完成智能巡检平台的开发、部署与上线支持，并提供上线后3个月运维服务。
+/** 兼容旧引用：与 `contractExamples[0].text` 一致 */
+export const exampleText = contractExamples[0].text
 
-第二条 费用与支付
-合同总金额为人民币80万元。甲方在项目全部上线并最终验收合格后60个工作日内一次性支付全部服务费，付款时间以甲方内部审批结果为准。乙方需先行垫付全部实施成本。
-
-第三条 知识产权
-项目产生的全部源代码、接口文档、技术成果及衍生成果自形成之日起永久归甲方所有，甲方无需另行支付任何费用。
-
-第四条 保密与数据
-乙方在合作过程中可接触甲方用户数据并配合处理，但双方未约定加密、删除期限和访问控制措施。甲方有权永久无偿使用合作形成的全部数据。
-
-第五条 违约责任
-因本项目引发的任何争议、损失或第三方索赔，均由乙方承担全部责任，甲方不承担任何责任。
-
-第六条 合同解除
-甲方可根据业务需要随时单方解除合同，无需承担补偿责任。
-
-第七条 争议解决
-双方同意，因本合同产生的争议，由甲方所在地人民法院管辖。`
+export { contractExamples }
 
 export const roleOptions = ['甲方', '乙方']
 
@@ -81,7 +66,7 @@ function riskCardElId(riskId) {
   return `risk-card-${riskId}`
 }
 
-const contractText = ref(exampleText)
+const contractText = ref(contractExamples[0].text)
 /** 本轮已成功提交审查的合同正文快照；底部输入在成功后清空，追问/对话仍使用此文本。 */
 const reviewedContractBody = ref('')
 const selectedRole = ref('乙方')
@@ -177,19 +162,19 @@ const groupedRiskSections = computed(() => {
   return [
     {
       key: 'high',
-      title: '🚨 高风险',
+      title: '高风险',
       emptyText: '暂无高风险项。',
       items: riskItems.filter((item) => item.severity === 'high'),
     },
     {
       key: 'medium',
-      title: '🟡 中风险',
+      title: '中风险',
       emptyText: '暂无中风险项。',
       items: riskItems.filter((item) => item.severity === 'medium'),
     },
     {
       key: 'low',
-      title: '🟢 低风险',
+      title: '低风险',
       emptyText: '暂无低风险项。',
       items: riskItems.filter((item) => item.severity === 'low'),
     },
@@ -204,21 +189,21 @@ const summaryCards = computed(() => {
   }
   return [
     {
-      icon: '🧠',
+      icon: '摘',
       title: 'AI一句话结论',
       value: result.value.one_line_conclusion,
       meta: `角色视角：${result.value.role}`,
       tone: overallLevelClass.value,
     },
     {
-      icon: '⚠️',
+      icon: '险',
       title: '合同总体风险结论',
       value: `总体${result.value.overall_risk_level}风险 · ${result.value.signing_advice}签署`,
       meta: result.value.lawyer_suggestion,
       tone: overallLevelClass.value,
     },
     {
-      icon: '📊',
+      icon: '分',
       title: '风险评分',
       value: `${result.value.risk_score}/100`,
       meta: result.value.risk_level_text,
@@ -228,8 +213,10 @@ const summaryCards = computed(() => {
   ]
 })
 
-function setExample() {
-  contractText.value = exampleText
+function setExample(index = 0) {
+  const i = Number(index)
+  const safe = Number.isFinite(i) && i >= 0 && i < contractExamples.length ? Math.floor(i) : 0
+  contractText.value = contractExamples[safe].text
 }
 
 function sessionContractText() {
@@ -527,6 +514,7 @@ export function useContractReview() {
     groupedRiskSections,
     overallLevelClass,
     summaryCards,
+    contractExamples,
     setExample,
     clearAll,
     handleModelChange,

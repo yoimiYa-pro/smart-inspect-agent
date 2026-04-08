@@ -3,7 +3,8 @@ from __future__ import annotations
 import logging
 import re
 import time
-from typing import Any
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Optional
 
 from app.schemas import (
     CategorySummary,
@@ -16,6 +17,7 @@ from app.schemas import (
     TopRiskItem,
 )
 from app.services import contract_tools
+from app.services.delilegal_client import DeliLegalClient
 from app.services.llm_client import OpenAICompatibleClient
 from app.services.mock_fallback import (
     answer_contract_chat_with_mock,
@@ -70,8 +72,13 @@ def _suggested_followups_chat(analysis: dict[str, Any], role: str) -> list[str]:
 
 
 class ContractReviewService:
-    def __init__(self, llm_client: OpenAICompatibleClient) -> None:
+    def __init__(
+        self,
+        llm_client: OpenAICompatibleClient,
+        delilegal_client: Optional[DeliLegalClient] = None,
+    ) -> None:
         self.llm_client = llm_client
+        self.delilegal_client = delilegal_client
 
     def analyze_contract(
         self,
@@ -138,6 +145,7 @@ class ContractReviewService:
         elif want_llm and risk_dicts:
             t_llm_start = time.monotonic()
             logger.info("analyze_contract llm_start", extra={"elapsed_ms": round((t_llm_start - t0) * 1000, 2)})
+            self._attach_delilegal_references(risk_dicts, contract_type)
             prompt_payload = self._build_review_prompt_payload(
                 contract_text=normalized,
                 role=selected_role,
@@ -183,6 +191,8 @@ class ContractReviewService:
                 "total_ms": round((time.monotonic() - t0) * 1000, 2),
             },
         )
+
+        self._sync_legal_basis_with_law_references(risk_dicts)
 
         return ReviewResponse(
             role=selected_role,
@@ -924,6 +934,8 @@ class ContractReviewService:
                 "role_advice": role_advice,
                 "llm_explanation": reason,
                 "followup_hint": build_followup_hint(hit),
+                "law_references": [],
+                "case_references": [],
             }
             risks.append(risk)
         return risks
@@ -984,6 +996,133 @@ class ContractReviewService:
             return "中"
         return "低"
 
+    def _law_refs_for_prompt(self, item: dict[str, Any]) -> list[dict[str, Any]]:
+        raw = item.get("law_references") or []
+        out: list[dict[str, Any]] = []
+        for r in raw[:5]:
+            if not isinstance(r, dict):
+                continue
+            lid = str(r.get("law_id", "")).strip()
+            title = str(r.get("title", "")).strip()
+            if not lid or not title:
+                continue
+            entry: dict[str, Any] = {"law_id": lid, "title": title}
+            ex = r.get("excerpt")
+            if isinstance(ex, str) and ex.strip():
+                entry["excerpt"] = ex.strip()[:800]
+            out.append(entry)
+        return out
+
+    def _case_refs_for_prompt(self, item: dict[str, Any]) -> list[dict[str, Any]]:
+        raw = item.get("case_references") or []
+        out: list[dict[str, Any]] = []
+        for r in raw[:2]:
+            if not isinstance(r, dict):
+                continue
+            cid = str(r.get("case_id", "")).strip()
+            title = str(r.get("title", "")).strip()
+            if not cid or not title:
+                continue
+            entry: dict[str, Any] = {
+                "case_id": cid,
+                "title": title[:300],
+            }
+            for key in ("court_name", "case_number", "judgment_date"):
+                val = r.get(key)
+                if isinstance(val, str) and val.strip():
+                    entry[key] = val.strip()[:120]
+            out.append(entry)
+        return out
+
+    def _attach_delilegal_references(self, risk_dicts: list[dict[str, Any]], contract_type: str) -> None:
+        client = self.delilegal_client
+        if client is None:
+            return
+        max_n = client.settings.delilegal_max_risks
+        slice_risks = risk_dicts[:max_n]
+        max_kw = 240
+
+        def enrich_one(risk: dict[str, Any]) -> None:
+            risk["law_references"] = []
+            risk["case_references"] = []
+            kw = f"{contract_type} {risk.get('title', '')} {risk.get('issue', '')}".strip()[:max_kw]
+            if not kw:
+                return
+            try:
+                hits = client.search_laws(kw, page_size=5)
+                picks = [dict(h) for h in hits[:2]]
+                if client.settings.delilegal_fetch_detail_in_review and picks:
+                    detail = client.get_law_info(picks[0]["law_id"], merge=True)
+                    content = (detail or {}).get("law_detail_content") or ""
+                    if isinstance(content, str) and content.strip():
+                        cap = client.settings.delilegal_excerpt_max_chars
+                        picks[0] = {**picks[0], "excerpt": content.strip()[:cap]}
+                risk["law_references"] = picks
+            except Exception as exc:
+                logger.warning(
+                    "delilegal law enrich failed for risk %s: %s",
+                    risk.get("id"),
+                    exc,
+                    exc_info=True,
+                )
+            try:
+                case_hits = client.search_cases(kw, page_size=5)
+                risk["case_references"] = [dict(c) for c in case_hits[:2]]
+            except Exception as exc:
+                logger.warning(
+                    "delilegal case enrich failed for risk %s: %s",
+                    risk.get("id"),
+                    exc,
+                    exc_info=True,
+                )
+
+        workers = min(4, len(slice_risks)) if slice_risks else 0
+        if workers <= 0:
+            return
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(enrich_one, r) for r in slice_risks]
+            for fut in futures:
+                fut.result()
+
+    @staticmethod
+    def _wrap_book_title(title: str) -> str:
+        s = str(title or "").strip().strip("《》").strip()
+        return f"《{s}》" if s else ""
+
+    @staticmethod
+    def _legal_basis_covers_law_title(legal_basis: str, title: str) -> bool:
+        if not str(title or "").strip():
+            return True
+        t = str(title).strip()
+        if t in legal_basis:
+            return True
+        core = t.replace("《", "").replace("》", "").strip()
+        if not core:
+            return True
+        lb = legal_basis.replace(" ", "").replace("\n", "")
+        return core.replace(" ", "") in lb.replace("《", "").replace("》", "")
+
+    def _sync_legal_basis_with_law_references(self, risks: list[dict[str, Any]]) -> None:
+        """保证法律依据与得理「相关法规」列表一致；模型漏写时由后端补全枚举句。"""
+        for risk in risks:
+            refs = risk.get("law_references") or []
+            if not refs:
+                continue
+            titles: list[str] = []
+            for r in refs:
+                if isinstance(r, dict):
+                    t = str(r.get("title", "")).strip()
+                    if t:
+                        titles.append(t)
+            if not titles:
+                continue
+            lb = str(risk.get("legal_basis", "")).strip()
+            if all(self._legal_basis_covers_law_title(lb, t) for t in titles):
+                continue
+            books = "、".join(self._wrap_book_title(t) for t in titles if self._wrap_book_title(t))
+            lead = f"与「相关法规」得理检索列示的依据一致，主要包括：{books}。"
+            risk["legal_basis"] = lead + ("\n\n" + lb if lb else "")
+
     def _build_review_prompt_payload(
         self,
         contract_text: str,
@@ -1036,6 +1175,8 @@ class ContractReviewService:
                     "legal_basis": item["legal_basis"],
                     "case_reference": item["case_reference"],
                     "clause_text": (item.get("clause_text") or "")[:220],
+                    "law_references": self._law_refs_for_prompt(item),
+                    "case_references": self._case_refs_for_prompt(item),
                 }
                 for item in risk_items[:8]
             ],

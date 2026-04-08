@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import ExampleContractPicker from './ExampleContractPicker.vue'
 import { roleOptions } from '../composables/useContractReview'
 
 const props = defineProps({
@@ -102,10 +103,12 @@ onMounted(() => syncTextareaHeight())
             <span>API</span>
           </label>
 
-          <button type="button" class="gemini-composer__tool" title="填充示例" @click="$emit('set-example')">
-            <span class="gemini-composer__tool-glyph" aria-hidden="true">+</span>
-            <span class="gemini-composer__tool-txt">示例</span>
-          </button>
+          <ExampleContractPicker
+            class="gemini-composer__example-picker"
+            select-class="gemini-composer__mini-select gemini-composer__mini-select--example"
+            :disabled="loading || modelSaving"
+            @pick="$emit('set-example', $event)"
+          />
           <button type="button" class="gemini-composer__tool" title="清空正文" @click="$emit('clear-all')">
             <span class="gemini-composer__tool-glyph" aria-hidden="true">×</span>
             <span class="gemini-composer__tool-txt">清空</span>

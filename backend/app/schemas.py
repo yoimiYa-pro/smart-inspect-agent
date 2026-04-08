@@ -44,6 +44,22 @@ class RoleAnalysis(BaseModel):
     advice: List[str] = Field(default_factory=list)
 
 
+class LawReferenceItem(BaseModel):
+    law_id: str
+    title: str
+    level_name: Optional[str] = None
+    timeliness_name: Optional[str] = None
+    excerpt: Optional[str] = None
+
+
+class CaseReferenceItem(BaseModel):
+    case_id: str
+    title: str
+    court_name: Optional[str] = None
+    case_number: Optional[str] = None
+    judgment_date: Optional[str] = None
+
+
 class RiskItem(BaseModel):
     id: str
     category: str
@@ -68,6 +84,8 @@ class RiskItem(BaseModel):
     role_advice: str
     llm_explanation: str
     followup_hint: str
+    law_references: List[LawReferenceItem] = Field(default_factory=list)
+    case_references: List[CaseReferenceItem] = Field(default_factory=list)
 
 
 class ReviewRequest(BaseModel):
@@ -160,6 +178,20 @@ class ModelConfigResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     llm_enabled: bool
+    delilegal_enabled: bool = False
     frontend_ready: bool
     active_model: str
     available_models: List[str] = Field(default_factory=list)
+
+
+class DelilegalLawDetailResponse(BaseModel):
+    law_id: str
+    title: str = ""
+    law_detail_content: str = ""
+    level_name: Optional[str] = None
+    timeliness_name: Optional[str] = None
+    publisher_name: Optional[str] = None
+    publish_date: Optional[str] = None
+    active_date: Optional[str] = None
+    issued_no: Optional[str] = None
+    laws_id: Optional[str] = None

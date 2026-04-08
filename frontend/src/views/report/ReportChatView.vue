@@ -5,8 +5,6 @@ import { useContractReview } from '../../composables/useContractReview'
 const {
   result,
   selectedRisk,
-  selectedRole,
-  useLlm,
   selectedModel,
   activeModel,
   modelOptions,
@@ -29,8 +27,6 @@ function setChatInput(v) {
     <DetailGuideChatSection
       :selected-risk="selectedRisk"
       :review-result="result"
-      :selected-role="selectedRole"
-      :use-llm="useLlm"
       :selected-model="selectedModel"
       :active-model="activeModel"
       :model-options="modelOptions"

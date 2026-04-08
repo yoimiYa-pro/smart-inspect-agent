@@ -1,10 +1,10 @@
 :root {
-  font-family: "Plus Jakarta Sans", Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
-    sans-serif;
-  /* Slate + indigo：偏「工作台 / 研报」质感，减少高对比红描边 */
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
+  /* Inter / 系统字体：贴近 Workspace / Gemini 类产品的克制排版 */
+  font-family: Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  /* 中性办公色 + Google 蓝强调 */
+  --text-primary: #1f1f1f;
+  --text-secondary: #444746;
+  --text-muted: #5f6368;
   color: var(--text-primary);
   line-height: 1.6;
   font-weight: 400;
@@ -18,55 +18,63 @@
   --text-sm: 13px;
   --text-base: 15px;
   --text-lg: 18px;
-  --text-xl: 24px;
-  --text-hero: clamp(28px, 4vw, 36px);
+  --text-xl: 22px;
+  --text-hero: clamp(26px, 3.5vw, 32px);
 
-  --surface-sidebar: #eef2ff;
-  --surface-main: #f8fafc;
-  --surface-page: #f1f5f9;
+  --surface-sidebar: #f3f6fc;
+  --surface-main: #f8f9fa;
+  --surface-page: #f0f4f9;
   --surface-card: #ffffff;
   --surface-card-elevated: #ffffff;
-  --sidebar-border: rgba(15, 23, 42, 0.06);
-  --sidebar-pill-active: #e0e7ff;
-  --sidebar-row-hover: rgba(79, 70, 229, 0.07);
+  /* 无强边框时，用略浅/略深的底与主栏区分区块 */
+  --surface-panel: #ffffff;
+  --surface-panel-muted: #fbfbfc;
+  --color-divider-subtle: rgba(60, 64, 67, 0.08);
+  --sidebar-border: #dadce0;
+  --sidebar-pill-active: #e8f0fe;
+  --sidebar-row-hover: rgba(60, 64, 67, 0.08);
   --sidebar-width: 280px;
   --sidebar-width-collapsed: 72px;
-  /* 固定底栏 left 与侧栏同步；可由 .page-shell 行内覆盖（收起态） */
   --composer-dock-left: var(--sidebar-width);
 
-  --color-border: rgba(15, 23, 42, 0.07);
-  --color-border-strong: rgba(15, 23, 42, 0.11);
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-  --color-primary-soft: #eef2ff;
-  --color-primary-soft-border: #c7d2fe;
-  --color-primary-faint: rgba(79, 70, 229, 0.08);
+  --color-border: #dadce0;
+  --color-border-strong: #bdc1c6;
+  --color-primary: #1a73e8;
+  --color-primary-hover: #1557b0;
+  --color-primary-soft: #e8f0fe;
+  --color-primary-soft-border: #d2e3fc;
+  --color-primary-faint: rgba(26, 115, 232, 0.08);
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 8px rgba(15, 23, 42, 0.04), 0 14px 28px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 2px rgba(60, 64, 67, 0.12), 0 1px 1px rgba(60, 64, 67, 0.06);
+  --shadow-md: 0 1px 3px rgba(60, 64, 67, 0.16), 0 4px 8px rgba(60, 64, 67, 0.08);
   --glass-border: var(--color-border);
   --glass-shadow: var(--shadow-sm);
-  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 52%, #4338ca 100%);
-  --primary-gradient-hover: linear-gradient(135deg, #818cf8 0%, #4f46e5 45%, #4338ca 100%);
+  /* 兼容旧代码里 background: var(--primary-gradient) — 改为纯色 */
+  --primary-gradient: #1a73e8;
+  --primary-gradient-hover: #1557b0;
 
-  --review-stack-gap: var(--space-5);
-  --review-inner-grid-gap: 20px;
+  --review-stack-gap: var(--space-6);
+  --review-inner-grid-gap: 24px;
   --review-anchor-offset: 96px;
   --review-clause-list-max-height: 600px;
   --review-chat-history-max-height: min(44vh, 400px);
   --review-clause-split-grid-max-height: min(70vh, 720px);
   --review-loading-min-height: 500px;
 
-  --radius-card: 18px;
-  --radius-md: 14px;
-  --radius-control: 12px;
+  --radius-card: 12px;
+  --radius-md: 10px;
+  --radius-control: 8px;
+  --radius-sm: 8px;
   --radius-pill: 999px;
-  --shadow-elevated: var(--shadow-md);
-  --color-risk-low: #059669;
-  --color-risk-medium: #d97706;
-  --color-risk-high: #e11d48;
+  --shadow-elevated: var(--shadow-sm);
+  --color-risk-low: #137333;
+  --color-risk-medium: #b06000;
+  --color-risk-high: #c5221f;
   --surface-elevated: var(--surface-card);
-  --ease-out-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Material / Gemini 类缓动：短、干脆 */
+  --ease-out-smooth: cubic-bezier(0.2, 0, 0, 1);
+  --motion-duration: 0.2s;
+  --motion-fast: 0.15s;
 }
 
 * {
@@ -104,7 +112,9 @@ select {
 
 button {
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color var(--motion-fast) var(--ease-out-smooth),
+    border-color var(--motion-fast) var(--ease-out-smooth), box-shadow var(--motion-fast) var(--ease-out-smooth),
+    color var(--motion-fast) var(--ease-out-smooth), opacity var(--motion-fast) var(--ease-out-smooth);
 }
 
 #app {

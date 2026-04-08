@@ -15,8 +15,6 @@ const THINKING_STEPS = [
 const props = defineProps({
   selectedRisk: { type: Object, default: null },
   reviewResult: { type: Object, default: null },
-  selectedRole: { type: String, default: '乙方' },
-  useLlm: { type: Boolean, default: true },
   selectedModel: { type: String, default: '' },
   activeModel: { type: String, default: '' },
   modelOptions: { type: Array, default: () => [] },
@@ -139,49 +137,28 @@ const thinkingLabel = computed(() => THINKING_STEPS[thinkingStepIndex.value] || 
         </div>
 
         <div id="review-chat-panel" class="gemini-chat-fusion__pane gemini-chat-fusion__pane--chat">
-          <header class="chat-panel__header gemini-chat-fusion__chat-head chat-panel__header--smart-chat">
-            <div class="chat-panel__title-row">
-              <span class="chat-panel__title-badge">对话式</span>
-              <h2 class="chat-panel__title">智能追问 · 合同审查智能体</h2>
-            </div>
-            <p class="chat-panel__lede chat-panel__lede--accent">
-              在页面底部输入问题并发送；可先选「风险分析」聚焦条款，左侧会同步显示摘要。
-            </p>
+          <header class="chat-panel__header gemini-chat-fusion__chat-head chat-panel__header--smart-chat chat-panel__header--streamlined">
+            <h2 class="chat-panel__title">智能追问</h2>
+            <p v-if="selectedRisk" class="chat-focus-line">{{ selectedRisk.title }}</p>
           </header>
-
-          <div class="agent-context-row" aria-label="智能体上下文">
-            <span class="agent-context-chip">视角 {{ selectedRole }}</span>
-            <span class="agent-context-chip" :title="activeModel || ''">
-              模型 {{ activeModel || '—' }}
-            </span>
-            <span class="agent-context-chip">{{ useLlm ? '优先真实 API' : '允许 mock' }}</span>
-            <span class="agent-context-chip agent-context-chip--focus">
-              {{ selectedRisk ? `聚焦：${selectedRisk.title}`.slice(0, 48) : '未聚焦条款' }}
-            </span>
-          </div>
-          <p class="agent-source-legend">
-            助手每条回复旁有来源角标：
-            <span class="agent-source-legend__live">大模型回答</span>
-            <span class="agent-source-legend__mock">本地兜底</span>
-            <span class="agent-source-legend__rules">审查结论摘要</span>
-            （悬停角标可看说明）
-          </p>
-
-          <div class="suggestion-row suggestion-row--gemini" aria-label="推荐问题">
-            <button
-              v-for="question in suggestedQuestions"
-              :key="question"
-              type="button"
-              class="chip-btn suggestion-row__chip"
-              :disabled="chatLoading"
-              @click="emit('submit-chat', question)"
-            >
-              {{ question }}
-            </button>
-          </div>
 
           <div ref="chatHistoryRef" class="chat-history chat-history--gemini">
             <div class="chat-history__inner">
+              <div v-if="!chatMessages.length && !chatLoading" class="chat-empty-starter">
+                <p class="chat-empty-starter__hint">在下方输入并发送；需要条款对照时，先在「风险分析」选中一条。</p>
+                <div class="suggestion-row suggestion-row--gemini" aria-label="快速提问">
+                  <button
+                    v-for="question in suggestedQuestions"
+                    :key="question"
+                    type="button"
+                    class="chip-btn suggestion-row__chip suggestion-row__chip--text"
+                    :disabled="chatLoading"
+                    @click="emit('submit-chat', question)"
+                  >
+                    {{ question }}
+                  </button>
+                </div>
+              </div>
               <transition-group name="list" tag="div" class="chat-history__messages">
                 <article
                   v-for="(message, index) in chatMessages"
@@ -193,13 +170,14 @@ const thinkingLabel = computed(() => THINKING_STEPS[thinkingStepIndex.value] || 
                     class="gemini-msg__head"
                     :class="message.role === 'user' ? 'gemini-msg__head--user' : ''"
                   >
-                    <div class="chat-role">{{ message.role === 'assistant' ? '智能体' : '你' }}</div>
-                    <span
-                      v-if="message.role === 'assistant'"
-                      class="chat-source-tag"
-                      :class="`chat-source-tag--${getChatAnswerSource(message).variant}`"
-                      :title="getChatAnswerSource(message).title"
-                    >{{ getChatAnswerSource(message).label }}</span>
+                    <template v-if="message.role === 'assistant'">
+                      <span
+                        class="chat-source-tag chat-source-tag--minimal"
+                        :class="`chat-source-tag--${getChatAnswerSource(message).variant}`"
+                        :title="getChatAnswerSource(message).title"
+                      >{{ getChatAnswerSource(message).label }}</span>
+                    </template>
+                    <span v-else class="gemini-msg__sender-user">你</span>
                   </div>
                   <div
                     v-if="message.role === 'assistant'"
@@ -226,8 +204,7 @@ const thinkingLabel = computed(() => THINKING_STEPS[thinkingStepIndex.value] || 
                 aria-live="polite"
               >
                 <div class="gemini-msg__head">
-                  <div class="chat-role">智能体</div>
-                  <span class="chat-source-tag chat-source-tag--pending" title="完成后将按本条实际来源标注"
+                  <span class="chat-source-tag chat-source-tag--minimal chat-source-tag--pending" title="完成后将显示来源"
                     >生成中…</span
                   >
                 </div>
@@ -241,19 +218,27 @@ const thinkingLabel = computed(() => THINKING_STEPS[thinkingStepIndex.value] || 
                 class="agent-followup-chips"
                 aria-label="建议继续追问"
               >
-                <span class="agent-followup-chips__label">下一步可问</span>
                 <div class="agent-followup-chips__row">
                   <button
                     v-for="(chip, cidx) in followupChipsForPanel"
                     :key="cidx"
                     type="button"
-                    class="chip-btn agent-followup-chip"
+                    class="chip-btn agent-followup-chip agent-followup-chip--quiet"
                     @click="emit('submit-chat', chip)"
                   >
                     {{ chip }}
                   </button>
                 </div>
               </div>
+
+              <details class="chat-source-help">
+                <summary>回复角标说明</summary>
+                <ul class="chat-source-help__list">
+                  <li><strong>大模型回答</strong>：由配置的模型生成。</li>
+                  <li><strong>本地兜底</strong>：未走通模型时的占位说明。</li>
+                  <li><strong>审查结论摘要</strong>：主要依据本轮结构化审查结果。</li>
+                </ul>
+              </details>
             </div>
           </div>
         </div>
@@ -283,7 +268,7 @@ const thinkingLabel = computed(() => THINKING_STEPS[thinkingStepIndex.value] || 
           <textarea
             :value="chatInput"
             class="report-chat-composer__input"
-            placeholder="向智能体提问…（Shift+Enter 换行，Enter 发送）"
+            placeholder="输入问题，Enter 发送，Shift+Enter 换行"
             rows="1"
             @input="emit('update:chatInput', $event.target.value)"
             @keydown.enter="onComposerEnter"

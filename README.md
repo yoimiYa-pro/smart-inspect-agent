@@ -78,6 +78,8 @@
 - 律师建议 `lawyer_suggestion`
 - 顶部一句话结论 `one_line_conclusion`
 
+首页与审查页底部输入条提供 **「示例合同…」** 下拉框，可一键填入三份示范节选（房屋租赁、商品买卖、技术服务），体例参考 [全国合同示范文本库](http://htsfwb.samr.gov.cn/)，便于演示；正式缔约请以官方最新文本为准。
+
 ### 2. 每条风险的结构化字段
 
 每个风险项至少包含：
@@ -278,6 +280,28 @@ OPENAI_MODEL=hunyuan-turbos-latest
 OPENAI_API_BASE=https://api.openai.com/v1
 OPENAI_MODEL=gpt-4o-mini
 ```
+
+## 得理法规与案例检索（可选）
+
+配置后，在 **启用 LLM 增强** 的审查流程中会对优先风险并行调用：
+
+- **法规**：`queryListLaw`，结果写入 `law_references`，参与 `legal_basis` 增强；前端可点击 **查看全文**（经后端代理 `lawInfo`，密钥不暴露给浏览器）。
+- **案例**：`queryListCase`（请求体 `condition.keywordArr` 与开放平台一致），结果写入 `case_references`，参与 `case_reference` 增强；前端展示检索到的标题及法院、案号等元数据（首版不提供案例全文代理）。
+
+在 `.env` 中可配置（示例值请替换为控制台真实凭证）：
+
+```env
+DELILEGAL_APPID=
+DELILEGAL_SECRET=
+# 可选
+# DELILEGAL_API_BASE=https://openapi.delilegal.com
+# DELILEGAL_TIMEOUT_SECONDS=20
+# DELILEGAL_MAX_RISKS=8
+# DELILEGAL_FETCH_DETAIL_IN_REVIEW=false
+# DELILEGAL_EXCERPT_MAX_CHARS=1500
+```
+
+未配置时行为与原先一致；`/api/health` 中 `delilegal_enabled` 表示是否已配置。
 
 ## 展示建议
 

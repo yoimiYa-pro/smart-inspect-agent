@@ -179,3 +179,17 @@ export function chatWithContract(
     fetchOpts,
   )
 }
+
+/**
+ * @param {string} lawId
+ * @param {{ merge?: boolean, timeoutMs?: number }} [fetchOpts]
+ */
+export function fetchDelilegalLawDetail(lawId, fetchOpts = {}) {
+  const merge = fetchOpts.merge !== false
+  const q = merge ? '?merge=true' : '?merge=false'
+  return request(
+    `/api/laws/delilegal/${encodeURIComponent(lawId)}${q}`,
+    { method: 'GET' },
+    fetchOpts,
+  )
+}

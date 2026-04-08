@@ -21,4 +21,4 @@ def test_post_review_defer_llm() -> None:
     assert r.status_code == 200
     body = r.json()
     assert body["llm_mode"] == "deferred"
-    assert body["contract_type"] == "技术开发/合作合同"
+    assert body["contract_type"] == "租赁合同"
